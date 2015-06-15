@@ -1,40 +1,40 @@
 // Copyright 2010 GoNeedle Authors. All rights reserved.
-// Use of this source code is governed by a 
+// Use of this source code is governed by a
 // license that can be found in the LICENSE file.
 
-// The Needle System is a simple general method for punching thru NATs and 
+// The Needle System is a simple general method for punching thru NATs and
 // Firewalls and establishing peer end-to-end reliable transport, using the
 // help of an intermediate thin Needle UDP server.
 
 package needle
 
 import (
+	pb "github.com/golang/protobuf/proto"
+	"github.com/petar/GoNeedle/needle/proto"
 	"net"
 	"os"
 	"sync"
 	"time"
-	"github.com/petar/GoNeedle/needle/proto"
-	pb "goprotobuf.googlecode.com/hg/proto"
 )
 
 // TODO:
 //   -- Use LLRB for expiration algorithm
 
 type Server struct {
-	conn  *net.UDPConn	  // Socket that receives UDP pings from the clients
-	peers map[string]*client  // Id-to-client map
-	lk    sync.Mutex          // Lock for peers field
+	conn  *net.UDPConn       // Socket that receives UDP pings from the clients
+	peers map[string]*client // Id-to-client map
+	lk    sync.Mutex         // Lock for peers field
 }
 
 // client describes real-time information for a given client
 type client struct {
-	id           string
-	lastSeen     int64
-	addr         *net.UDPAddr
+	id       string
+	lastSeen int64
+	addr     *net.UDPAddr
 
 	// @dials maps the ID of the peer, that this peer has requested to connect to, to
 	// the time when the request was communicated to the server.
-	// @rings maps the ID of the peer, requesting to connect to this peer, to 
+	// @rings maps the ID of the peer, requesting to connect to this peer, to
 	// the time when the request was communicated to the server.
 	dials, rings map[string]int64
 }
@@ -52,7 +52,7 @@ func makeClient(id string, lastSeen int64, addr *net.UDPAddr) *client {
 // o When ping-ing, read out the dial requests and update clients involved
 
 func MakeServer(uaddr string) (*Server, os.Error) {
-	
+
 	// Resolve UDP address
 	uaddr2, err := net.ResolveUDPAddr(uaddr)
 	if err != nil {
@@ -67,7 +67,7 @@ func MakeServer(uaddr string) (*Server, os.Error) {
 
 	// Start server
 	s := &Server{
-		conn: conn,
+		conn:  conn,
 		peers: make(map[string]*client),
 	}
 	go s.listenLoop()
@@ -86,7 +86,7 @@ func (s *Server) lookupAddr_NL(id string) *net.UDPAddr {
 	return c.addr
 }
 
-// expire() removes all client structures, dial and ring records that 
+// expire() removes all client structures, dial and ring records that
 // have not been refreshed recently
 func (s *Server) expire() {
 	s.lk.Lock()
@@ -94,17 +94,17 @@ func (s *Server) expire() {
 
 	now := time.Nanoseconds()
 	for id, cl := range s.peers {
-		if now - cl.lastSeen > Lifetime {
+		if now-cl.lastSeen > Lifetime {
 			s.peers[id] = nil, false
 			continue
 		}
 		for id2, l2 := range cl.dials {
-			if now - l2 > Lifetime {
+			if now-l2 > Lifetime {
 				cl.dials[id2] = 0, false
 			}
 		}
 		for id2, l2 := range cl.rings {
-			if now - l2 > Lifetime {
+			if now-l2 > Lifetime {
 				cl.rings[id2] = 0, false
 			}
 		}
@@ -232,13 +232,13 @@ func (s *Server) processPing(id string, now int64, addr *net.UDPAddr, dialing []
 func (s *Server) receivePing() {
 
 	// Read next UDP packet
-	b := make([]byte, MaxPacketSize + 1)
+	b := make([]byte, MaxPacketSize+1)
 	n, addr, err := s.conn.ReadFromUDP(b)
 	Logf("Pack recv'd\n")
-	if err != nil || n >= MaxPacketSize + 1 {
+	if err != nil || n >= MaxPacketSize+1 {
 		return
 	}
-	
+
 	// Decode packet contents
 	ping := &proto.Ping{}
 	err = pb.Unmarshal(b[0:n], ping)

@@ -5,4 +5,4 @@ GOFILES=\
 	needle.pb.go\
 
 include $(GOROOT)/src/Make.pkg
-include $(GOROOT)/src/pkg/goprotobuf.googlecode.com/hg/Make.protobuf
+include $(GOROOT)/src/pkg/github.com/golang/protobuf/Make.protobuf

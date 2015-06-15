@@ -1,24 +1,24 @@
 // Copyright 2010 GoNeedle Authors. All rights reserved.
-// Use of this source code is governed by a 
+// Use of this source code is governed by a
 // license that can be found in the LICENSE file.
 
 package needle
 
 import (
 	"fmt"
+	pb "github.com/golang/protobuf/proto"
+	"github.com/petar/GoNeedle/needle/proto"
 	"net"
 	"os"
 	"sync"
 	"time"
-	"github.com/petar/GoNeedle/needle/proto"
-	pb "goprotobuf.googlecode.com/hg/proto"
 )
 
 type Peer struct {
-	id         string        // ID of this peer
-	serverAddr *net.UDPAddr  // UDP address of needle server
-	conn       *net.UDPConn  // UDP connection for all purposes
-	dials      dialBook      // Structure of outstanding dial requests
+	id         string       // ID of this peer
+	serverAddr *net.UDPAddr // UDP address of needle server
+	conn       *net.UDPConn // UDP connection for all purposes
+	dials      dialBook     // Structure of outstanding dial requests
 	lk         sync.Mutex
 }
 
